@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	val, err := calculator.Calculate("((((1)+1))*(1-1)*3-(1+1))")
+	val, err := calculator.Calculate("-1")
 	if err == nil {
 		fmt.Printf("%v\n", val)
 	} else {
