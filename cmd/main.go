@@ -4,49 +4,32 @@ import (
 	"calculator"
 	"fmt"
 	"os"
+	"strings"
+
+	"github.com/c-bata/go-prompt"
 )
 
-func main() {
-	val, err := calculator.Calculate("-(-(-2))")
-	if err == nil {
-		fmt.Printf("%v\n", val)
-	} else {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
+func executor(s string) {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return
 	}
+	if s == "exit" || s == "quit" {
+		os.Exit(0)
+	}
+	val, err := calculator.Calculate(s)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		return
+	}
+	fmt.Printf("%v\n", val)
 }
 
-// import (
-// 	"calculator"
-// 	"fmt"
-// 	"os"
-// 	"strings"
-
-// 	"github.com/c-bata/go-prompt"
-// )
-
-// func executor(s string) {
-// 	// fmt.Print(s)
-// 	s = strings.TrimSpace(s)
-// 	if s == "" {
-// 		return
-// 	}
-// 	if s == "exit" || s == "quit" {
-// 		os.Exit(0)
-// 	}
-// 	val, err := calculator.Calculate(s)
-// 	if err == nil {
-// 		fmt.Printf("%v\n", val)
-// 	} else {
-// 		fmt.Fprintf(os.Stderr, "%v\n", err)
-// 	}
-// }
-
-// func main() {
-// 	p := prompt.New(
-// 		executor,
-// 		// TODO: add autocomplite for functions
-// 		func(d prompt.Document) []prompt.Suggest { return []prompt.Suggest{} },
-// 		prompt.OptionPrefix("calculator> "),
-// 	)
-// 	p.Run()
-// }
+func main() {
+	p := prompt.New(
+		executor,
+		func(d prompt.Document) []prompt.Suggest { return []prompt.Suggest{} },
+		prompt.OptionPrefix("calculator>> "),
+	)
+	p.Run()
+}
