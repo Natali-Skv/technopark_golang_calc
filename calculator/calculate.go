@@ -7,11 +7,11 @@ import (
 )
 
 var precedenceTable = map[tokenType]int{
-	unaryMinus:     4,
-	multiplication: 3,
-	division:       3,
-	addition:       2,
-	subtraction:    2,
+	unaryMinus:     3,
+	multiplication: 2,
+	division:       2,
+	addition:       1,
+	subtraction:    1,
 }
 
 var mathFunctions = map[string]interface{}{
@@ -119,11 +119,16 @@ func newCalculator() *calcuator {
 }
 
 func Calculate(expression string) (float64, error) {
-	tokens, err := scanExpression([]rune(expression))
-	if err != nil {
-		return 0, err
+	tokens, indEndExpr, err := ScanExpression([]rune(expression), 0)
+	if err != nil || indEndExpr < len(expression) {
+		return 0, fmt.Errorf("uncorrect expression")
 	}
 	calc := newCalculator()
+	return calc.calculate(tokens)
+}
+
+func (calc *calcuator) calculate(tokens []token) (float64, error) {
+	var err error
 	for _, currToken := range tokens {
 		switch currToken.tkType {
 		case operand:
@@ -147,17 +152,19 @@ func Calculate(expression string) (float64, error) {
 			}
 		case mathFunction:
 			{
-			args := []float64{}
-			for _, arg := range n.args {
-				val, err := calculate(arg)
-				if err != nil {
-					return 0, err
+				var args []float64
+				for _, arg := range currToken.args {
+					calcArg := newCalculator()
+					argRes, err := calcArg.calculate(arg)
+					if err != nil {
+						return 0, err
+					}
+					args = append(args, argRes)
 				}
-				args = append(args, val)
+				var result float64
+				result, err = callMathFunc(string(currToken.value), args)
+				calc.operandStack.push(result)
 			}
-			return call(n.funcName, args)
-		}
-		// return 0, fmt.Errorf("unknown node type: %s", n.kind)
 		default:
 			{
 				currOperator := currToken
@@ -170,11 +177,11 @@ func Calculate(expression string) (float64, error) {
 		}
 	}
 
-	for err == nil {
+	for len(calc.operatorStack.operators) > 0 && err == nil {
 		err = calc.performOperation()
 	}
 
-	if len(calc.operandStack.operands) != 1 || len(calc.operatorStack.operators) > 0 {
+	if len(calc.operandStack.operands) != 1 || len(calc.operatorStack.operators) > 0 || err != nil {
 		return 0, fmt.Errorf("expression is not valid")
 	}
 	result, err := calc.operandStack.pop(1)
@@ -256,16 +263,15 @@ func (calc *calcuator) performOperation() error {
 }
 
 func callMathFunc(funcName string, args []float64) (float64, error) {
-	mathFunc, exits := mathFunctions[funcName]
-	if !exits {
+	mathFunc, exists := mathFunctions[funcName]
+	if !exists {
 		return 0, fmt.Errorf("unknown function %s", funcName)
 	}
-	mathFunc.
 	switch mathFunc := mathFunc.(type) {
 	case func() float64:
 		return mathFunc(), nil
 	case func(float64) float64:
-		return f(args[0]), nil
+		return mathFunc(args[0]), nil
 	case func(float64, float64) float64:
 		return mathFunc(args[0], args[1]), nil
 	case func(float64, float64, float64) float64:

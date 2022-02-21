@@ -23,37 +23,55 @@ const (
 type token struct {
 	tkType tokenType
 	value  []rune
+	args   [][]token
 }
 
-func scanExpression(strExpr []rune) ([]token, error) {
-	tokens := make([]token, 0, len(strExpr))
-	for poz := 0; poz < len(strExpr); {
+// TODO: checge S to s
+func ScanExpression(strExpr []rune, poz int) (tokens []token, newPoz int, err error) {
+	bracketCounter := 0
+	for poz < len(strExpr) {
+		if bracketCounter < 0 {
+			return tokens[:len(tokens)-1], poz - 1, nil
+		}
 		nextToken, newPoz, err := getNextToken(strExpr, poz)
 		if err != nil {
-			return nil, err
+			if bracketCounter == 0 {
+				return tokens, poz, nil
+			}
+			return nil, poz, nil
+		}
+		switch nextToken.tkType {
+		case lParenthsis:
+			bracketCounter++
+		case rParenthsis:
+			bracketCounter--
 		}
 		if nextToken.tkType != noSuchToken {
 			tokens = append(tokens, nextToken)
 		}
 		poz = newPoz
 	}
-	return tokens, nil
+	if bracketCounter < 0 {
+		return tokens[:len(tokens)-1], poz - 1, nil
+	}
+	if bracketCounter > 0 {
+		return nil, poz, fmt.Errorf("uncorrect bracket sequence")
+	}
+	return tokens, poz, nil
 }
-
-//  TODO add functions sin ect
 
 func getNextToken(str []rune, poz int) (token, int, error) {
 	switch {
 	case str[poz] == '+':
-		return token{addition, []rune{str[poz]}}, poz + 1, nil
+		return token{addition, []rune{str[poz]}, nil}, poz + 1, nil
 	case str[poz] == '*':
-		return token{multiplication, []rune{str[poz]}}, poz + 1, nil
+		return token{multiplication, []rune{str[poz]}, nil}, poz + 1, nil
 	case str[poz] == '/':
-		return token{division, []rune{str[poz]}}, poz + 1, nil
+		return token{division, []rune{str[poz]}, nil}, poz + 1, nil
 	case str[poz] == '(':
-		return token{lParenthsis, []rune{str[poz]}}, poz + 1, nil
+		return token{lParenthsis, []rune{str[poz]}, nil}, poz + 1, nil
 	case str[poz] == ')':
-		return token{rParenthsis, []rune{str[poz]}}, poz + 1, nil
+		return token{rParenthsis, []rune{str[poz]}, nil}, poz + 1, nil
 	case unicode.IsSpace(str[poz]):
 		return token{}, poz + 1, nil
 	case str[poz] == '-':
@@ -61,15 +79,12 @@ func getNextToken(str []rune, poz int) (token, int, error) {
 		for ; pozLastTokenEnd >= 0 && unicode.IsSpace(str[pozLastTokenEnd]); pozLastTokenEnd-- {
 		}
 		if pozLastTokenEnd < 0 || str[pozLastTokenEnd] == '(' {
-			return token{unaryMinus, []rune{str[poz]}}, poz + 1, nil
+			return token{unaryMinus, []rune{str[poz]}, nil}, poz + 1, nil
 		}
-		return token{subtraction, []rune{str[poz]}}, poz + 1, nil
-	// case !unicode.IsDigit(str[poz]):
-	// return token{}, poz, fmt.Errorf("not valid operand or operator")
+		return token{subtraction, []rune{str[poz]}, nil}, poz + 1, nil
 	case isAlpha(str[poz]):
 		{
-			funcName, poz := scanFunc(str, poz)
-			return token{tkType: mathFunction, value: funcName}, poz, nil
+			return scanFunc(str, poz)
 
 		}
 	case unicode.IsDigit(str[poz]):
@@ -89,14 +104,22 @@ func scanOperand(str []rune, poz int) (operand []rune, newPoz int) {
 	return operand, poz
 }
 
-func scanFunc(str []rune, poz int) (funcName []rune, newPoz int) {
+func scanFunc(str []rune, poz int) (funcToken token, newPoz int, err error) {
 	if !isAlpha(str[poz]) {
-		return nil, poz
+		return token{}, poz, fmt.Errorf("it is not math function")
 	}
-	for ; poz < len(str) && (isAlNum(str[poz])); poz++ {
-		funcName = append(funcName, str[poz])
+	pozInter := poz
+	for ; pozInter < len(str) && (isAlNum(str[pozInter])); pozInter++ {
+		funcToken.value = append(funcToken.value, str[pozInter])
 	}
-	return funcName, poz
+	argsNum, err := argsNum(string(funcToken.value))
+	if err != nil {
+		return token{}, poz, err
+	}
+
+	funcToken.tkType = mathFunction
+	funcToken.args, poz, err = scanFuncArgs(argsNum, str, pozInter)
+	return funcToken, poz, err
 }
 
 func isAlpha(char rune) bool {
@@ -105,4 +128,53 @@ func isAlpha(char rune) bool {
 
 func isAlNum(char rune) bool {
 	return isAlpha(char) || (char >= '0' && char <= '9')
+}
+
+func argsNum(funcName string) (int, error) {
+	mathFunc, exits := mathFunctions[funcName]
+	if !exits {
+		return 0, fmt.Errorf("unknown function %s", funcName)
+	}
+	switch mathFunc.(type) {
+	case func() float64:
+		return 0, nil
+	case func(float64) float64:
+		return 1, nil
+	case func(float64, float64) float64:
+		return 2, nil
+	case func(float64, float64, float64) float64:
+		return 3, nil
+	default:
+		return 0, fmt.Errorf("invalid function %s", funcName)
+	}
+}
+
+func scanFuncArgs(argsNum int, str []rune, poz int) (args [][]token, newPoz int, err error) {
+	if str[poz] != '(' {
+		return nil, poz, fmt.Errorf("function arguments must be enclosed in parentheses")
+	}
+	newPoz = poz + 1
+	var currArgument []token
+	for ; argsNum > 0 && newPoz < len(str); argsNum-- {
+		currArgument, newPoz, err = ScanExpression(str, newPoz)
+		if err != nil {
+			return nil, newPoz, fmt.Errorf("unncorrect arguments")
+		}
+		if argsNum > 1 {
+			if newPoz < len(str) && str[newPoz] == ',' {
+				newPoz++
+			} else {
+				return nil, newPoz, fmt.Errorf("unncorrect arguments")
+			}
+		}
+		args = append(args, currArgument)
+	}
+	if newPoz >= len(str) {
+		return nil, newPoz, fmt.Errorf("unncorrect arguments")
+	}
+	nextToken, newPoz, err := getNextToken(str, newPoz)
+	if err != nil || nextToken.tkType != rParenthsis {
+		return nil, newPoz, fmt.Errorf("unncorrect arguments")
+	}
+	return args, newPoz, nil
 }
