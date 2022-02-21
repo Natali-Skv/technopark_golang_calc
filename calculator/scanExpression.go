@@ -17,7 +17,6 @@ const (
 	multiplication
 	division
 	unaryMinus
-	mathFunction
 )
 
 type token struct {
@@ -39,8 +38,6 @@ func scanExpression(strExpr []rune) ([]token, error) {
 	}
 	return tokens, nil
 }
-
-//  TODO add functions sin ect
 
 func getNextToken(str []rune, poz int) (token, int, error) {
 	switch {
@@ -64,14 +61,8 @@ func getNextToken(str []rune, poz int) (token, int, error) {
 			return token{unaryMinus, []rune{str[poz]}}, poz + 1, nil
 		}
 		return token{subtraction, []rune{str[poz]}}, poz + 1, nil
-	// case !unicode.IsDigit(str[poz]):
-	// return token{}, poz, fmt.Errorf("not valid operand or operator")
-	case isAlpha(str[poz]):
-		{
-			funcName, poz := scanFunc(str, poz)
-			return token{tkType: mathFunction, value: funcName}, poz, nil
-
-		}
+	case !unicode.IsDigit(str[poz]):
+		return token{}, poz, fmt.Errorf("not valid operand or operator")
 	case unicode.IsDigit(str[poz]):
 		{
 			number, poz := scanOperand(str, poz)
@@ -87,22 +78,4 @@ func scanOperand(str []rune, poz int) (operand []rune, newPoz int) {
 		operand = append(operand, str[poz])
 	}
 	return operand, poz
-}
-
-func scanFunc(str []rune, poz int) (funcName []rune, newPoz int) {
-	if !isAlpha(str[poz]) {
-		return nil, poz
-	}
-	for ; poz < len(str) && (isAlNum(str[poz])); poz++ {
-		funcName = append(funcName, str[poz])
-	}
-	return funcName, poz
-}
-
-func isAlpha(char rune) bool {
-	return (char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z')
-}
-
-func isAlNum(char rune) bool {
-	return isAlpha(char) || (char >= '0' && char <= '9')
 }

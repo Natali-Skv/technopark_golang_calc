@@ -2,67 +2,15 @@ package calculator
 
 import (
 	"fmt"
-	"math"
 	"strconv"
 )
 
 var precedenceTable = map[tokenType]int{
-	unaryMinus:     4,
-	multiplication: 3,
-	division:       3,
-	addition:       2,
-	subtraction:    2,
-}
-
-var mathFunctions = map[string]interface{}{
-	"abs":         math.Abs,
-	"acos":        math.Acos,
-	"acosh":       math.Acosh,
-	"asin":        math.Asin,
-	"asinh":       math.Asinh,
-	"atan":        math.Atan,
-	"atan2":       math.Atan2,
-	"atanh":       math.Atanh,
-	"cbrt":        math.Cbrt,
-	"ceil":        math.Ceil,
-	"copysign":    math.Copysign,
-	"cos":         math.Cos,
-	"cosh":        math.Cosh,
-	"dim":         math.Dim,
-	"erf":         math.Erf,
-	"erfc":        math.Erfc,
-	"erfcinv":     math.Erfcinv, // Go 1.10+
-	"erfinv":      math.Erfinv,  // Go 1.10+
-	"exp":         math.Exp,
-	"exp2":        math.Exp2,
-	"expm1":       math.Expm1,
-	"floor":       math.Floor,
-	"gamma":       math.Gamma,
-	"hypot":       math.Hypot,
-	"j0":          math.J0,
-	"j1":          math.J1,
-	"log":         math.Log,
-	"log10":       math.Log10,
-	"log1p":       math.Log1p,
-	"log2":        math.Log2,
-	"logb":        math.Logb,
-	"max":         math.Max,
-	"min":         math.Min,
-	"mod":         math.Mod,
-	"nan":         math.NaN,
-	"nextafter":   math.Nextafter,
-	"pow":         math.Pow,
-	"remainder":   math.Remainder,
-	"round":       math.Round,       // Go 1.10+
-	"roundtoeven": math.RoundToEven, // Go 1.10+
-	"sin":         math.Sin,
-	"sinh":        math.Sinh,
-	"sqrt":        math.Sqrt,
-	"tan":         math.Tan,
-	"tanh":        math.Tanh,
-	"trunc":       math.Trunc,
-	"y0":          math.Y0,
-	"y1":          math.Y1,
+	unaryMinus:     3,
+	multiplication: 2,
+	division:       2,
+	addition:       1,
+	subtraction:    1,
 }
 
 type stackOperators struct {
@@ -145,19 +93,6 @@ func Calculate(expression string) (float64, error) {
 			{
 				calc.operatorStack.push(currToken)
 			}
-		case mathFunction:
-			{
-			args := []float64{}
-			for _, arg := range n.args {
-				val, err := calculate(arg)
-				if err != nil {
-					return 0, err
-				}
-				args = append(args, val)
-			}
-			return call(n.funcName, args)
-		}
-		// return 0, fmt.Errorf("unknown node type: %s", n.kind)
 		default:
 			{
 				currOperator := currToken
@@ -170,11 +105,15 @@ func Calculate(expression string) (float64, error) {
 		}
 	}
 
-	for err == nil {
+	// for err == nil {
+	// err = calc.performOperation()
+	// }
+
+	for len(calc.operatorStack.operators) > 0 && err == nil {
 		err = calc.performOperation()
 	}
 
-	if len(calc.operandStack.operands) != 1 || len(calc.operatorStack.operators) > 0 {
+	if len(calc.operandStack.operands) != 1 || len(calc.operatorStack.operators) > 0 || err != nil {
 		return 0, fmt.Errorf("expression is not valid")
 	}
 	result, err := calc.operandStack.pop(1)
@@ -253,24 +192,4 @@ func (calc *calcuator) performOperation() error {
 		err = fmt.Errorf("no such operation")
 	}
 	return err
-}
-
-func callMathFunc(funcName string, args []float64) (float64, error) {
-	mathFunc, exits := mathFunctions[funcName]
-	if !exits {
-		return 0, fmt.Errorf("unknown function %s", funcName)
-	}
-	mathFunc.
-	switch mathFunc := mathFunc.(type) {
-	case func() float64:
-		return mathFunc(), nil
-	case func(float64) float64:
-		return f(args[0]), nil
-	case func(float64, float64) float64:
-		return mathFunc(args[0], args[1]), nil
-	case func(float64, float64, float64) float64:
-		return mathFunc(args[0], args[1], args[2]), nil
-	default:
-		return 0, fmt.Errorf("invalid function %s", funcName)
-	}
 }

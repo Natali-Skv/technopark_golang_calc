@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	val, err := calculator.Calculate("-1")
+	val, err := calculator.Calculate("-(-(-2))")
 	if err == nil {
 		fmt.Printf("%v\n", val)
 	} else {
