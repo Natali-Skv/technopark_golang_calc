@@ -10,9 +10,14 @@
 ### Пример работы
 
 ```bash
-    $ go run calc.go "(1+2)-3"
-    0
-
-    $ go run calc.go "(1+2)*3"
-    9
+$ go run main.go 
+calculator>> (1+2)*3
+9
+calculator>> (1+2)/(3+4)
+0.42857142857142855
+calculator>> -9+9
+0
+calculator>> (1+2
+expression is not valid
+calculator>> 
 ```
