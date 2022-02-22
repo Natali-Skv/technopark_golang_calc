@@ -47,8 +47,8 @@ var mathFunctions = map[string]interface{}{
 	"dim":         math.Dim,
 	"erf":         math.Erf,
 	"erfc":        math.Erfc,
-	"erfcinv":     math.Erfcinv, // Go 1.10+
-	"erfinv":      math.Erfinv,  // Go 1.10+
+	"erfcinv":     math.Erfcinv,
+	"erfinv":      math.Erfinv,
 	"exp":         math.Exp,
 	"exp2":        math.Exp2,
 	"expm1":       math.Expm1,
@@ -70,8 +70,8 @@ var mathFunctions = map[string]interface{}{
 	"pi":          math.Pi,
 	"pow":         math.Pow,
 	"remainder":   math.Remainder,
-	"round":       math.Round,       // Go 1.10+
-	"roundtoeven": math.RoundToEven, // Go 1.10+
+	"round":       math.Round,
+	"roundtoeven": math.RoundToEven,
 	"sin":         math.Sin,
 	"sinh":        math.Sinh,
 	"sqrt":        math.Sqrt,
@@ -136,7 +136,7 @@ func newCalculator() *calcuator {
 }
 
 func Calculate(expression string) (float64, error) {
-	tokens, indEndExpr, err := ScanExpression([]rune(expression), 0)
+	tokens, indEndExpr, err := scanExpression([]rune(expression), 0)
 	if err != nil || indEndExpr < len(expression) {
 		return 0, fmt.Errorf("uncorrect expression")
 	}

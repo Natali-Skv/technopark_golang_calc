@@ -26,8 +26,7 @@ type token struct {
 	args   [][]token
 }
 
-// TODO: checge S to s
-func ScanExpression(strExpr []rune, poz int) (tokens []token, newPoz int, err error) {
+func scanExpression(strExpr []rune, poz int) (tokens []token, newPoz int, err error) {
 	bracketCounter := 0
 	for poz < len(strExpr) {
 		if bracketCounter < 0 {
@@ -193,7 +192,7 @@ func scanFuncArgs(argsNum int, str []rune, poz int) (args [][]token, newPoz int,
 	newPoz = poz + 1
 	var currArgument []token
 	for ; argsNum > 0 && newPoz < len(str); argsNum-- {
-		currArgument, newPoz, err = ScanExpression(str, newPoz)
+		currArgument, newPoz, err = scanExpression(str, newPoz)
 		if err != nil {
 			return nil, newPoz, fmt.Errorf("unncorrect arguments")
 		}
