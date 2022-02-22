@@ -1,20 +1,5 @@
 package main
 
-// import (
-// 	"calculator"
-// 	"fmt"
-// )
-
-// func main() {
-// 	// val, err := calculator.Calculate("-1")
-// 	// expr, poz, err := calculator.ScanExpression([]rune("pow((2)),1)"), 0)
-// 	// expr, poz, err := calculator.ScanExpression([]rune("(1+1))"), 0)
-// 	expr, err := calculator.Calculate("pow(2,10)+pow(2,3)")
-// 	fmt.Println(expr)
-// 	// fmt.Println(poz)
-// 	fmt.Println(err)
-// }
-
 import (
 	"calculator"
 	"fmt"
@@ -25,7 +10,6 @@ import (
 )
 
 func executor(s string) {
-	// fmt.Print(s)
 	s = strings.TrimSpace(s)
 	if s == "" {
 		return
@@ -42,6 +26,17 @@ func executor(s string) {
 }
 func completer(d prompt.Document) []prompt.Suggest {
 	s := []prompt.Suggest{
+		{Text: "e"},
+		{Text: "pi"},
+		{Text: "phi"},
+		{Text: "sqrt2"},
+		{Text: "sqrte"},
+		{Text: "sqrtpi"},
+		{Text: "sqrtphi"},
+		{Text: "ln2"},
+		{Text: "log2e"},
+		{Text: "ln10"},
+		{Text: "log10e"},
 		{Text: "abs"},
 		{Text: "acos"},
 		{Text: "acosh"},
@@ -90,7 +85,6 @@ func completer(d prompt.Document) []prompt.Suggest {
 		{Text: "trunc"},
 		{Text: "y0"},
 		{Text: "y1"},
-		// {Text: "users", Description: "Store the username and age"},
 	}
 	return prompt.FilterHasPrefix(s, d.GetWordBeforeCursor(), true)
 }

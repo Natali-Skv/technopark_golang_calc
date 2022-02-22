@@ -14,6 +14,22 @@ var precedenceTable = map[tokenType]int{
 	subtraction:    1,
 }
 
+var mathConstants = map[string]float64{
+	"e":   math.E,
+	"pi":  math.Pi,
+	"phi": math.Phi,
+
+	"sqrt2":   math.Sqrt2,
+	"sqrte":   math.SqrtE,
+	"sqrtpi":  math.SqrtPi,
+	"sqrtphi": math.SqrtPhi,
+
+	"ln2":    math.Ln2,
+	"log2e":  math.Log2E,
+	"ln10":   math.Ln10,
+	"log10e": math.Log10E,
+}
+
 var mathFunctions = map[string]interface{}{
 	"abs":         math.Abs,
 	"acos":        math.Acos,
@@ -51,6 +67,7 @@ var mathFunctions = map[string]interface{}{
 	"mod":         math.Mod,
 	"nan":         math.NaN,
 	"nextafter":   math.Nextafter,
+	"pi":          math.Pi,
 	"pow":         math.Pow,
 	"remainder":   math.Remainder,
 	"round":       math.Round,       // Go 1.10+
@@ -133,9 +150,13 @@ func (calc *calcuator) calculate(tokens []token) (float64, error) {
 		switch currToken.tkType {
 		case operand:
 			{
-				operandNumber, err := strconv.ParseFloat(string(currToken.value), 64)
-				if err != nil {
-					return 0, err
+				var operandNumber float64
+				var exists bool
+				if operandNumber, exists = mathConstants[string(currToken.value)]; !exists {
+					operandNumber, err = strconv.ParseFloat(string(currToken.value), 64)
+					if err != nil {
+						return 0, err
+					}
 				}
 				calc.operandStack.push(operandNumber)
 			}

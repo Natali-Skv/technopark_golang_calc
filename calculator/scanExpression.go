@@ -61,6 +61,12 @@ func ScanExpression(strExpr []rune, poz int) (tokens []token, newPoz int, err er
 }
 
 func getNextToken(str []rune, poz int) (token, int, error) {
+	if str == nil {
+		return token{}, poz, fmt.Errorf("nil passed as argument")
+	}
+	if poz >= len(str) {
+		return token{}, poz, fmt.Errorf("end of line reached")
+	}
 	switch {
 	case str[poz] == '+':
 		return token{addition, []rune{str[poz]}, nil}, poz + 1, nil
@@ -78,18 +84,38 @@ func getNextToken(str []rune, poz int) (token, int, error) {
 		pozLastTokenEnd := poz - 1
 		for ; pozLastTokenEnd >= 0 && unicode.IsSpace(str[pozLastTokenEnd]); pozLastTokenEnd-- {
 		}
-		if pozLastTokenEnd < 0 || str[pozLastTokenEnd] == '(' {
+		if pozLastTokenEnd < 0 || str[pozLastTokenEnd] == '(' || str[pozLastTokenEnd] == ',' {
 			return token{unaryMinus, []rune{str[poz]}, nil}, poz + 1, nil
 		}
 		return token{subtraction, []rune{str[poz]}, nil}, poz + 1, nil
 	case isAlpha(str[poz]):
 		{
-			return scanFunc(str, poz)
+			literal, poz, err := scanLiteral(str, poz)
+			if err != nil {
+				return token{}, poz, err
+			}
 
+			if _, exist := mathConstants[string(literal)]; exist {
+				return token{tkType: operand, value: literal}, poz, nil
+			}
+
+			argsNum, err := argsNum(string(literal))
+			if err != nil {
+				return token{}, poz, err
+			}
+			funcToken := token{tkType: mathFunction, value: literal}
+			funcToken.args, poz, err = scanFuncArgs(argsNum, str, poz)
+			if err != nil {
+				return token{}, poz, err
+			}
+			return funcToken, poz, nil
 		}
 	case unicode.IsDigit(str[poz]):
 		{
-			number, poz := scanOperand(str, poz)
+			number, poz, err := scanOperand(str, poz)
+			if err != nil {
+				return token{}, poz, err
+			}
 			return token{tkType: operand, value: number}, poz, nil
 		}
 	default:
@@ -97,29 +123,34 @@ func getNextToken(str []rune, poz int) (token, int, error) {
 	}
 }
 
-func scanOperand(str []rune, poz int) (operand []rune, newPoz int) {
+func scanOperand(str []rune, poz int) (operand []rune, newPoz int, err error) {
+	if str == nil {
+		return nil, poz, fmt.Errorf("nil passed as argument")
+	}
+	if poz >= len(str) {
+		return nil, poz, fmt.Errorf("end of line reached")
+	}
 	for ; poz < len(str) && (unicode.IsDigit(str[poz]) || str[poz] == '.'); poz++ {
 		operand = append(operand, str[poz])
 	}
-	return operand, poz
+	return operand, poz, nil
 }
 
-func scanFunc(str []rune, poz int) (funcToken token, newPoz int, err error) {
+func scanLiteral(str []rune, poz int) (literal []rune, newPoz int, err error) {
+	if str == nil {
+		return nil, poz, fmt.Errorf("nil passed as argument")
+	}
+	if poz >= len(str) {
+		return nil, poz, fmt.Errorf("end of line reached")
+	}
 	if !isAlpha(str[poz]) {
-		return token{}, poz, fmt.Errorf("it is not math function")
+		return nil, poz, fmt.Errorf("it is not math literal")
 	}
-	pozInter := poz
-	for ; pozInter < len(str) && (isAlNum(str[pozInter])); pozInter++ {
-		funcToken.value = append(funcToken.value, str[pozInter])
+	pozIter := poz
+	for ; pozIter < len(str) && (isAlNum(str[pozIter])); pozIter++ {
+		literal = append(literal, unicode.ToLower(str[pozIter]))
 	}
-	argsNum, err := argsNum(string(funcToken.value))
-	if err != nil {
-		return token{}, poz, err
-	}
-
-	funcToken.tkType = mathFunction
-	funcToken.args, poz, err = scanFuncArgs(argsNum, str, pozInter)
-	return funcToken, poz, err
+	return literal, pozIter, nil
 }
 
 func isAlpha(char rune) bool {
@@ -150,6 +181,12 @@ func argsNum(funcName string) (int, error) {
 }
 
 func scanFuncArgs(argsNum int, str []rune, poz int) (args [][]token, newPoz int, err error) {
+	if str == nil {
+		return nil, poz, fmt.Errorf("nil passed as argument")
+	}
+	if poz >= len(str) {
+		return nil, poz, fmt.Errorf("end of line reached")
+	}
 	if str[poz] != '(' {
 		return nil, poz, fmt.Errorf("function arguments must be enclosed in parentheses")
 	}
