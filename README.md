@@ -10,9 +10,21 @@
 ### Пример работы
 
 ```bash
-    $ go run calc.go "(1+2)-3"
-    0
-
-    $ go run calc.go "(1+2)*3"
-    9
+calculator>> (2+2)*2
+8
+calculator>> (2 + 2) * 2
+8
+calculator>> log10(1000) + sqrt2
+4.414213562373095
+calculator>> abs( -pow(2,3) + sin(pi) - log2(1024))
+18
+calculator>> log(pow(e,10))
+10
+calculator>> cbrt(700 + 29) -1.1
+7.9
+calculator>> max(-trunc(e), -trunc(pi))
+-2
+calculator>> sin(asin(sqrt2/2))
+0.7071067811865475
 ```
+![alt-text](https://github.com/Natali-Skv/technopark_golang_calc/blob/dev-with-fcns/example.gif)
