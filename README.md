@@ -84,6 +84,7 @@
 ![alt-text](https://github.com/Natali-Skv/technopark_golang_calc/blob/dev-with-fcns/example.gif)
 
 ```bash
+
 calculator>> (2+2)*2
 8
 calculator>> (2 + 2) * 2
@@ -100,4 +101,8 @@ calculator>> max(-trunc(e), -trunc(pi))
 -2
 calculator>> sin(asin(sqrt2/2))
 0.7071067811865475
+calculator>> (1+2
+expression is not valid
+calculator>> 
+
 ```
