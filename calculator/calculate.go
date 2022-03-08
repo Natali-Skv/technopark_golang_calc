@@ -2,7 +2,6 @@ package calculator
 
 import (
 	"fmt"
-	"math"
 	"strconv"
 )
 
@@ -12,115 +11,6 @@ var precedenceTable = map[tokenType]int{
 	division:       2,
 	addition:       1,
 	subtraction:    1,
-}
-
-var mathConstants = map[string]float64{
-	"e":   math.E,
-	"pi":  math.Pi,
-	"phi": math.Phi,
-
-	"sqrt2":   math.Sqrt2,
-	"sqrte":   math.SqrtE,
-	"sqrtpi":  math.SqrtPi,
-	"sqrtphi": math.SqrtPhi,
-
-	"ln2":    math.Ln2,
-	"log2e":  math.Log2E,
-	"ln10":   math.Ln10,
-	"log10e": math.Log10E,
-}
-
-var mathFunctions = map[string]interface{}{
-	"abs":         math.Abs,
-	"acos":        math.Acos,
-	"acosh":       math.Acosh,
-	"asin":        math.Asin,
-	"asinh":       math.Asinh,
-	"atan":        math.Atan,
-	"atan2":       math.Atan2,
-	"atanh":       math.Atanh,
-	"cbrt":        math.Cbrt,
-	"ceil":        math.Ceil,
-	"copysign":    math.Copysign,
-	"cos":         math.Cos,
-	"cosh":        math.Cosh,
-	"dim":         math.Dim,
-	"erf":         math.Erf,
-	"erfc":        math.Erfc,
-	"erfcinv":     math.Erfcinv,
-	"erfinv":      math.Erfinv,
-	"exp":         math.Exp,
-	"exp2":        math.Exp2,
-	"expm1":       math.Expm1,
-	"floor":       math.Floor,
-	"gamma":       math.Gamma,
-	"hypot":       math.Hypot,
-	"j0":          math.J0,
-	"j1":          math.J1,
-	"log":         math.Log,
-	"log10":       math.Log10,
-	"log1p":       math.Log1p,
-	"log2":        math.Log2,
-	"logb":        math.Logb,
-	"max":         math.Max,
-	"min":         math.Min,
-	"mod":         math.Mod,
-	"nan":         math.NaN,
-	"nextafter":   math.Nextafter,
-	"pi":          math.Pi,
-	"pow":         math.Pow,
-	"remainder":   math.Remainder,
-	"round":       math.Round,
-	"roundtoeven": math.RoundToEven,
-	"sin":         math.Sin,
-	"sinh":        math.Sinh,
-	"sqrt":        math.Sqrt,
-	"tan":         math.Tan,
-	"tanh":        math.Tanh,
-	"trunc":       math.Trunc,
-	"y0":          math.Y0,
-	"y1":          math.Y1,
-}
-
-type stackOperators struct {
-	operators []token
-}
-
-func (s *stackOperators) pop() (token, error) {
-	if len(s.operators) <= 0 {
-		return token{}, fmt.Errorf("stack is empty")
-	}
-	top := s.operators[len(s.operators)-1]
-	s.operators = s.operators[:len(s.operators)-1]
-	return top, nil
-}
-
-func (s *stackOperators) top() (token, error) {
-	if len(s.operators) <= 0 {
-		return token{}, fmt.Errorf("stack is empty")
-	}
-	return s.operators[len(s.operators)-1], nil
-}
-
-func (s *stackOperators) push(newOperand token) {
-	s.operators = append(s.operators, newOperand)
-}
-
-type stackOperands struct {
-	operands []float64
-}
-
-func (s *stackOperands) pop(count int) ([]float64, error) {
-	if len(s.operands)-count < 0 {
-		return nil, fmt.Errorf("stack is empty")
-	}
-	topCount := s.operands[len(s.operands)-count:]
-	s.operands = s.operands[:len(s.operands)-count]
-	return topCount, nil
-}
-
-func (s *stackOperands) push(newOperand float64) {
-	s.operands = append(s.operands, newOperand)
 }
 
 type calcuator struct {
@@ -137,6 +27,7 @@ func newCalculator() *calcuator {
 
 func Calculate(expression string) (float64, error) {
 	tokens, indEndExpr, err := scanExpression([]rune(expression), 0)
+
 	if err != nil || indEndExpr < len(expression) {
 		return 0, fmt.Errorf("uncorrect expression")
 	}
